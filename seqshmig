@@ -1,0 +1,48 @@
+#!/bin/bash
+set -o nounset -o errexit -o pipefail
+
+declare -a opts=()
+
+while getopts :d:th arg
+do
+  opts+=("-$arg")
+  if test -n "${OPTARG+_}"
+  then
+    opts+=("$OPTARG")
+  fi
+done
+shift $(($OPTIND - 1))
+
+# 1st is the one you have created with this “create”
+put_2nd_latest_script_seq() {
+  local second_latest="$(
+    dir="$1"
+    ls "$dir" |
+    sort -nr |
+    sed -n -e '2,2 p'
+  )"
+  if test -z "$second_latest"
+  then
+    echo 0
+  else
+    echo "$second_latest" | sed -e 's/-.*//'
+  fi
+}
+
+bash ".shmig-$(cat .commit-shmig-latest)" "${opts[@]+"${opts[@]}"}" "$@" |
+while IFS= read line
+do
+  if grep -q "^generated " <<< "$line"
+  then
+    script_path="$(sed -e 's/^generated //' <<< "$line")"
+    migrations_dir="$(dirname "$script_path")"
+    filename="$(basename "$script_path")"
+    latest_script_seq="$(put_2nd_latest_script_seq "$migrations_dir")"
+    next_script_seq=$(($latest_script_seq + 1))
+    new_script_path="$migrations_dir/$next_script_seq-script.sql"
+    mv "$script_path" "$new_script_path"
+    echo "generated $new_script_path"
+  else
+    echo "$line"
+  fi
+done
