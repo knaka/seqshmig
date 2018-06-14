@@ -1,19 +1,7 @@
 #!/bin/bash
 set -o nounset -o errexit -o pipefail
 
-declare -a opts=()
-
-while getopts :d:th arg
-do
-  opts+=("-$arg")
-  if test -n "${OPTARG+_}"
-  then
-    opts+=("$OPTARG")
-  fi
-done
-shift $(($OPTIND - 1))
-
-# 1st is the one you have created with this “create”
+# 1st is the one you have created with last “create”
 put_2nd_latest_script_seq() {
   local second_latest="$(
     dir="$1"
@@ -29,7 +17,14 @@ put_2nd_latest_script_seq() {
   fi
 }
 
-bash ".shmig-$(cat .commit-shmig-latest)" "${opts[@]+"${opts[@]}"}" "$@" |
+commit_file=".shmig-latest-commit"
+
+if ! test -r "$commit_file"
+then
+  ./fetch-latest-shmig
+fi
+
+bash ".shmig-$(cat "$commit_file")" "$@" |
 while IFS= read line
 do
   if grep -q "^generated " <<< "$line"

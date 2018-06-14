@@ -32,4 +32,4 @@ file=".shmig-$short_commit"
 curl "https://raw.githubusercontent.com/mbucc/$project/$short_commit/shmig" > "$file"
 # Remove execution permission not to run shmig command directly
 chmod -x "$file"
-echo "$short_commit" > .commit-shmig-latest
+echo "$short_commit" > .shmig-latest-commit
