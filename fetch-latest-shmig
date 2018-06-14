@@ -1,6 +1,10 @@
 #!/bin/bash
 set -o nounset -o errexit -o pipefail
 
+script_dir="$(p="$0"; while true; do t="$(readlink "$p")"; cd "$(dirname "$p")"; test -z "$t" && break || p="$t"; done; pwd -P)"
+seqshmig_path="$script_dir/.seqshmig"
+mkdir -p "$seqshmig_path"
+
 user="mbucc"
 project="shmig"
 
@@ -27,9 +31,10 @@ get_latest_master_commit() {
 
 commit="$(get_latest_master_commit)"
 short_commit="${commit:0:7}"
-file=".shmig-$short_commit"
+file="shmig-$short_commit"
 
-curl "https://raw.githubusercontent.com/mbucc/$project/$short_commit/shmig" > "$file"
+shmig_cmd_path="$seqshmig_path/$file"
+curl "https://raw.githubusercontent.com/mbucc/$project/$short_commit/shmig" > "$shmig_cmd_path"
 # Remove execution permission not to run shmig command directly
-chmod -x "$file"
-echo "$short_commit" > .shmig-latest-commit
+chmod -x "$shmig_cmd_path"
+echo "$short_commit" > "$seqshmig_path/shmig-latest-commit"

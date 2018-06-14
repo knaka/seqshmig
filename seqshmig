@@ -1,6 +1,10 @@
 #!/bin/bash
 set -o nounset -o errexit -o pipefail
 
+script_dir="$(p="$0"; while true; do t="$(readlink "$p")"; cd "$(dirname "$p")"; test -z "$t" && break || p="$t"; done; pwd -P)"
+seqshmig_path="$script_dir/.seqshmig"
+mkdir -p "$seqshmig_path"
+
 # 1st is the one you have created with last “create”
 put_2nd_latest_script_seq() {
   local second_latest="$(
@@ -17,14 +21,14 @@ put_2nd_latest_script_seq() {
   fi
 }
 
-commit_file=".shmig-latest-commit"
+commit_file="$seqshmig_path/shmig-latest-commit"
 
 if ! test -r "$commit_file"
 then
-  ./fetch-latest-shmig
+  "$script_dir/fetch-latest-shmig"
 fi
 
-bash ".shmig-$(cat "$commit_file")" "$@" |
+bash "$seqshmig_path/shmig-$(cat "$commit_file")" "$@" |
 while IFS= read line
 do
   if grep -q "^generated " <<< "$line"
