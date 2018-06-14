@@ -1,0 +1,35 @@
+#!/bin/bash
+set -o nounset -o errexit -o pipefail
+
+user="mbucc"
+project="shmig"
+
+get_latest_master_commit_sub() {
+  git ls-remote "git://github.com/$user/$project.git" |
+  while read commit ref
+  do
+    # echo "$commit - $ref" >&2
+    if test "$ref" = "refs/heads/master"
+    then
+      echo "$commit"
+    fi
+  done
+}
+
+get_latest_master_commit() {
+  commit="$(get_latest_master_commit_sub)"
+  if test -z "$commit"
+  then
+    exit 1
+  fi
+  echo "$commit"
+}
+
+commit="$(get_latest_master_commit)"
+short_commit="${commit:0:7}"
+file=".shmig-$short_commit"
+
+curl "https://raw.githubusercontent.com/mbucc/$project/$short_commit/shmig" > "$file"
+# Remove execution permission not to run shmig command directly
+chmod -x "$file"
+echo "$short_commit" > .commit-shmig-latest
